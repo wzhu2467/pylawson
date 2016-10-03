@@ -6,11 +6,11 @@ Simple use:
 
 ```python
 import pylawson as ios
-url = '/lawson-ios/action/ListTokens?productLine=' + lawson.profile['productline'] + '&systemCode=GL'
 response_xml = ''
 with ios.Session() as lawson:
     lawson.login()
     lawson.get_profile()
+    url = '/lawson-ios/action/ListTokens?productLine=' + lawson.profile['productline'] + '&systemCode=GL'
     response_xml = lawson.get(url)
 ```
 
