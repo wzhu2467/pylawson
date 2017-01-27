@@ -228,7 +228,7 @@ class Ios(object):
     def call(self, call_type: str, params: dict) -> BeautifulSoup:
         if not self.productline:
             _ = self.profile()
-        if call_type not in ('Data', 'Transaction', 'Drill', 'Attach'):
+        if call_type not in ('Data', 'Transaction', 'Drill', 'Attach', 'Tokens'):
             raise IosError('Invalid call type.')
         if call_type in ('Data', 'Drill') and params.get('PROD') is None:
             params['PROD'] = self.productline
@@ -236,10 +236,14 @@ class Ios(object):
             params['_PDL'] = self.productline
         elif call_type == 'Attach' and params.get('dataArea') is None:
             params['dataArea'] = self.productline
+        elif call_type == 'Tokens' and params.get('productLine') is None:
+            params['productLine'] = self.productline
         if call_type in ('Data', 'Drill', 'Transaction'):
             url = urljoin(self.target_resource, '/servlet/Router/' + call_type + '/erp')
         elif call_type == 'Attach':
             url = urljoin(self.target_resource, '/lawson-ios/action/ListAttachments')
+        elif call_type == 'Tokens':
+            url = urljoin(self.target_resource, '/lawson-ios/action/ListTokens')
         # noinspection PyUnboundLocalVariable
         soup = BeautifulSoup(self.session.post(url, data=params).text.encode('utf-8'), 'lxml-xml')
         if soup.contents[0].name == 'ERROR':
