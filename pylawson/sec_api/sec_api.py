@@ -22,7 +22,9 @@ except FileNotFoundError:
     _secapi = clr.AddReference(
         os.getenv('PROGRAMFILES', r'c:\Program Files') + r'\Lawson Software\Office Add-ins\sec-api.dll'
     )
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 from Security import EnvironmentManagement, Factory, LawsonHttpClient, LSConnect
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 from System import Threading
 
 
@@ -43,7 +45,7 @@ class Session(object):
 
         #: The sec-api .NET library crashes if it doesn't detect a Single Apartment State environment.
         thread = Threading.Thread.CurrentThread
-        assert thread.TrySetApartmentState(Threading.ApartmentState.STA) == True
+        assert thread.TrySetApartmentState(Threading.ApartmentState.STA) is True
 
         #: The Security Factory class has the function to instantiate the Authenticator Interface,
         #: which in turn has the Login function which returns our Connection Interface.
@@ -56,8 +58,7 @@ class Session(object):
         self.connection = None
 
         #: Dictionary of Profile Attributes for the logged-in user.
-        self.profile = {}
-        self.profile['productline'] = None
+        self.profile = {'productline': None}
 
         #: Transfer token for session persistence.
         self.xfer_token = None
