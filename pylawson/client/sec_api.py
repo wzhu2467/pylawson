@@ -6,7 +6,8 @@ from typing import Union
 from urllib.parse import urlencode, urljoin
 # noinspection PyPackageRequirements
 from bs4 import BeautifulSoup
-from pylawson.pylawson import IosSession, IosError, IosAuthenticationError
+from pylawson import IosError, IosAuthenticationError
+from pylawson.client import IosSession
 
 import clr
 try:

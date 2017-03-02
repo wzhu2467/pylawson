@@ -1,49 +1,39 @@
 # pylawson
-This module exposes a Python API to connect to Infor Lawson IOS services by authenticating on the
-Lawson server in a requests session, following the same pattern as the Lawson Excel Add-Ins (or the
-pylawson.sec_api subpackage).
+This package exposes a Python API to connect to Infor Lawson IOS services.
+
+The `pylawson.client` package contains Session objects for authenticating on the lawson server: 
+`sec_api.SecApiSession` for Windows utilizes the `sec-api.dll` library which is installed with 
+the Lawson Excel Add-Ins; and `ms_samlpr.SamlSession` which uses `requests` to robotically 
+authenticate through the SAML login session.
 
 Simple use:
 
-```python
-from pylawson import Ios
-lawson = Ios(target_resource='https://cloud.infor.com/sso/SSOServlet',
-             ident_provider='http://your.co/adfs/services/trust',
-             username='username',
-             password='password')
-lawson.save_resources()  # Creates pylawson.json file with credentials
-lawson.auth()
-profile = lawson.profile()
-response_soup = lawson.call(call_type='Tokens', params={'systemCode': 'GL'})
+First create a json file with connection details (each value is optional and can alternatively
+be passed directly to the session instantiation):
+
+```json
+{"lawson": 
+    {
+        "lawson_server": "https://target.resource/sso/SSOServlet",
+        "ident_server": "http://identity.provider/adfs", 
+        "ident_host": "identity.provider", 
+        "username": "username", 
+        "password": "password" 
+    }
+}
 ```
 
-This authenticates on the server and leaves a `BeautifulSoup` object in `response_soup` with the result
-of a ListTokens action for the GL system. The `save_resources` method serializes your credentials so
-that future instantiations can be accomplished with simply `lawson = Ios()`.
-
-
-
-# pylawson.sec_api
-
-This module exposes a Python API to connect to Infor Lawson IOS services by connecting to the 
-Infor Lawson Office Add-ins .NET library (Infor Security sec-api.dll).
-
-Simple use:
+Then write a couple of lines of code:
 
 ```python
-import pylawson.sec_api as ios
-response_xml = ''
-with ios.Session() as lawson:
-    lawson.login()
-    lawson.get_profile()
-    url = '/lawson-ios/action/ListTokens?productLine=' + lawson.profile['productline'] + '&systemCode=GL'
-    response_xml = lawson.get(url)
+from pylawson import Tokens
+from pylawson.client import SamlSession as Ios
+lawson = Ios(json_file='./pylawson.json')
+response = lawson.tokens({'systemCode': 'GL'})
 ```
 
-This will pop up a login window allowing you to authenticate manually, then leaves an xml string in
-`response_xml`.
+This authenticates on the server and returns Lawson's XML response in a string with the result
+of a ListTokens action for the GL system.
 
-**NOTE:** *Expect future updates to bring the sec_api API in line with the pylawson API.*
-
-The IOS URL's and parameters are documented in Infor's **'Doc for Developers: IOS Application Program Interfaces--Windows'**
-available on the Infor Xtreme support site.
+**NOTE:** The IOS URL's and parameters are documented in Infor's *'Doc for Developers: IOS Application 
+Program Interfaces--Windows'* available on the Infor Xtreme support site.

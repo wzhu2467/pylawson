@@ -7,7 +7,8 @@ from bs4 import BeautifulSoup
 from requests import Session
 from requests.compat import cookielib
 from urllib.parse import urljoin, urlparse
-from pylawson.pylawson import IosSession, IosError, IosAuthenticationError
+from pylawson import IosError, IosAuthenticationError
+from pylawson.client import IosSession
 
 logger = getLogger(__name__)
 
