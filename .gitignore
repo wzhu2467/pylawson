@@ -3,6 +3,8 @@ __pycache__/
 pylawson/__pycache__/
 
 # Distribution / packaging
-.gitignore
 *.egg-info/
 .idea/
+
+# dev temporary files
+test.py
