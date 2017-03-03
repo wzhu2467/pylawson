@@ -9,13 +9,14 @@ from bs4 import BeautifulSoup
 from pylawson import IosError, IosAuthenticationError
 from pylawson.client import IosSession
 
+# noinspection PyPackageRequirements
 import clr
 try:
-    _secapi = clr.AddReference(
+    _ = clr.AddReference(
         os.getenv('PROGRAMFILES(x86)', r'c:\Program Files (x86)') + r'\Lawson Software\Office Add-ins\sec-api.dll'
     )
 except FileNotFoundError:
-    _secapi = clr.AddReference(
+    _ = clr.AddReference(
         os.getenv('PROGRAMFILES', r'c:\Program Files') + r'\Lawson Software\Office Add-ins\sec-api.dll'
     )
 # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -69,6 +70,7 @@ class SecApiSession(IosSession):
 
         # The balance of our methods are found on the Connection Interface.
         self.connection = None
+        self.server = None
         logger.debug('Basic SecApiSession instantiation completed.')
 
         # Run login, which populates self.connection, self._xfer_url, self.server, and self._profile
@@ -101,6 +103,7 @@ class SecApiSession(IosSession):
         self.connection = None
         logger.info(msg='Closed session.')
 
+    # noinspection PyPep8Naming
     def login(self, clientDisplayName: str):
         """Pop up Login window for user to log in to Lawson.
 
