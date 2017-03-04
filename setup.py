@@ -4,7 +4,7 @@ setup(
     name='pylawson',
     version='0.2',
     description='Infor Lawson IOS API Wrapper',
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
     keywords='infor lawson erp',
     url='https://github.com/indepndnt/pylawson',
     author='Joe Carey',
