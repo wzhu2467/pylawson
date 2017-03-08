@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from requests import Session
 from requests.compat import cookielib
 from urllib.parse import urljoin, urlparse
-from pylawson import IosError, IosAuthenticationError
+from pylawson import IosAuthenticationError, IosConnectionError
 from pylawson.client import IosSession
 
 logger = getLogger(__name__)
@@ -74,7 +74,7 @@ class SamlSession(IosSession):
         if 'wa=wsignin' not in response.headers.get('Location', '') or response.status_code != 302:
             msg = 'Unexpected response from initial Target Resource Request.'
             logger.error(msg=msg)
-            raise IosError(msg)
+            raise IosConnectionError(msg)
 
         # 2 - Discover Identity Provider - form to select IdP (unless persistent cookie) - status 200
         id_response = self.session.get(url=response.headers['Location'], allow_redirects=False)
@@ -89,13 +89,13 @@ class SamlSession(IosSession):
             if response.cookies.get('MSISIPSelectionSession') is None:
                 msg = 'Unexpected response from Identity Provider Form Submission.'
                 logger.error(msg=msg)
-                raise IosError(msg)
+                raise IosConnectionError(msg)
         else:
             redirect = id_response.headers.get('Location')
             if id_response.cookies.get('MSISIPSelectionSession') is None:
                 msg = 'Unexpected response from SSO Service Redirect.'
                 logger.error(msg=msg)
-                raise IosError(msg)
+                raise IosConnectionError(msg)
 
         # 4 - Request the SSO Service at IdP - provides sign in form - status 200
         response = self.session.get(redirect, allow_redirects=False, headers={'Referer': id_response.url})
@@ -104,7 +104,7 @@ class SamlSession(IosSession):
         if 'wa=wsignin' not in url or response.status_code != 200:
             msg = 'Unexpected response from Sign In Form Submission.'
             logger.error(msg=msg)
-            raise IosError(msg)
+            raise IosConnectionError(msg)
 
         # 5 - Identify the user - sets auth cookies - status 302
         response = self.session.post(url, allow_redirects=False, data=data, headers={'Referer': response.url})
@@ -123,7 +123,7 @@ class SamlSession(IosSession):
         if response.cookies.get('MSISAuthenticated') is None or response.status_code != 200:
             msg = 'Unexpected response from SSO XHTML Form.'
             logger.error(msg=msg)
-            raise IosError(msg)
+            raise IosConnectionError(msg)
 
         # 7 - Request Assertion Consumer Service at Service Provider - status 200 (JS autosubmit script)
         response = self.session.post(url, allow_redirects=False, data=data, headers={'Referer': response.url})
@@ -132,7 +132,7 @@ class SamlSession(IosSession):
         if response.cookies.get('MSISSignOut') is None or response.status_code != 200:
             msg = 'Unexpected response from Assertion Consumer Service Request.'
             logger.error(msg=msg)
-            raise IosError(msg)
+            raise IosConnectionError(msg)
 
         # 8 - Redirect to target resource - sets C.LWSN session cookie finally - status 302
         response = self.session.post(url, allow_redirects=False, data=data, headers={'Referer': response.url})
@@ -145,7 +145,7 @@ class SamlSession(IosSession):
         if response.cookies.get('C.LWSN') is None or response.status_code != 302:
             msg = 'Unexpected response from Target Resource Redirect.'
             logger.error(msg=msg)
-            raise IosError(msg)
+            raise IosConnectionError(msg)
 
         # 9 - Request target resource again - status 200 - (JS redirects to LOGINCOMPLETE)
         response = self.session.get(
@@ -156,7 +156,7 @@ class SamlSession(IosSession):
         if 'LOGINCOMPLETE' not in response.text:
             msg = 'Unexpected response from Target Resource.'
             logger.error(msg=msg)
-            raise IosError(msg)
+            raise IosConnectionError(msg)
 
         # Get Transfer Session URL for session refresh later.
         self._xfer_url = self.session.get(urljoin(self._params['lawson_server'], '?_action=GET_XFER_SESSION')).text
@@ -176,7 +176,7 @@ class SamlSession(IosSession):
         if len(soup.find_all('form')) != 1:
             msg = 'Unsupported number of Forms on page [{}].'.format(response.url)
             logger.error(msg=msg)
-            raise IosError(msg)
+            raise IosConnectionError(msg)
         if select is not None and 'Provider' in select.get('name'):
             data[select] = self._params['ident_server']
         for element in soup.find_all('input'):

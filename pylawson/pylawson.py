@@ -1,60 +1,65 @@
 from logging import getLogger
 # noinspection PyPackageRequirements
 from bs4 import BeautifulSoup
-from pylawson.client import IosSession
+from .client import IosSession as Session
+from .exceptions import IosDataError
 
 logger = getLogger(__name__)
 
 
-class IosError(Exception):
-    """Exceptions raised from IOS connection errors."""
-
-    def __init__(self, message: str):
-        self.message = message
-
-
-class IosAuthenticationError(IosError):
-    """Authentication error from connecting to IOS."""
-    pass
-
-
 class LawsonBase:
     """Base class for Lawson data objects."""
-    resource_url = None
-    productline_key = None
-
-    def __init__(self, session: IosSession, **kwargs):
+    def __init__(self, session: Session, **kwargs):
         self.session = session
-        self.xml = None
+        self._soup = None
+        self._xml = None
         self.params = kwargs
 
     def __repr__(self):
         return self.__class__.__name__
 
+    @property
+    def xml(self):
+        return self._xml
+
+    @xml.setter
+    def xml(self, value: str):
+        self._soup = None
+        self._xml = value
+
+    @property
+    def soup(self):
+        if not self._soup:
+            self._soup = BeautifulSoup(self.xml, 'html.parser')
+        return self._soup
+
     def _error_check(self):
-        soup = BeautifulSoup(self.xml, 'html.parser')
-        if soup.contents[0].name == 'ERROR':
-            msg = 'Infor error: [{}] {}'.format(soup.contents[0].attrs.get('key'), soup('MSG')[0].text)
+        if self.soup.contents[0].name == 'ERROR':
+            msg = 'Infor error: [{}] {}'.format(self.soup.contents[0].attrs.get('key'), self.soup('MSG')[0].text)
             logger.error(msg=msg)
-            raise IosError(msg)
+            raise IosDataError(msg)
 
     def query(self, **kwargs):
-        self.params.update(**kwargs)
-        if self.params.get(self.productline_key) is None:
-            # noinspection PyUnresolvedReferences
-            self.params[self.productline_key] = self.session.profile.productline
-        self.xml = self.session.post(url=self.resource_url, data=self.params)
-        self._error_check()
-        return self.xml
+        raise NotImplementedError
 
     def upload(self, **kwargs):
-        self.params.update(**kwargs)
-        if self.params.get(self.productline_key) is None:
-            # noinspection PyUnresolvedReferences
-            self.params[self.productline_key] = self.session.profile.productline
-        self.xml = self.session.post(url=self.resource_url, data=self.params)
+        raise NotImplementedError
+
+
+class What(LawsonBase):
+    def query(self, jar: str='IOS.jar'):
+        self.params.update({'_JAR': jar})
+        # Expected response like:
+        # <WHAT laversion="10.0.5.0.1093 2015-09-22 04:00:00"><JAR name="IOS.jar" path="..."><MANIFEST><![CDATA[
+        # Implementation-Vendor: Lawson Software
+        # Implementation-Title: IOS
+        # Implementation-Version: 8-)@(#)@10.0.5.0.1093 2015-09-22 04:00:00]]></MANIFEST><LAVERSION>
+        # <![CDATA[8-)@(#)@10.0.5.0.1093 2015-09-22 04:00:00]]></LAVERSION></JAR></WHAT>"""
+        self.xml = self.session.what(data=self.params)
         self._error_check()
-        return self.xml
+        return self
+
+    upload = None
 
 
 class Account(LawsonBase):
@@ -70,24 +75,23 @@ class Activity(LawsonBase):
         self.params.update({'FILE': 'ACACTIVITY', 'OUT': 'XML', 'NEXT': 'FALSE', 'keyUsage': 'PARAM'})
         self.xml = self.session.data(data=self.params)
         self._error_check()
-        return self.xml
+        return self
 
     def upload(self):
         self.params.update({'_TKN': 'AC10.1', '_RTN': 'DATA', '_TDS': 'IGNORE', '_OUT': 'XML', '_EOT': 'TRUE'})
         self.xml = self.session.transaction(data=self.params)
         self._error_check()
-        return self.xml
+        return self
 
 
 class Journal(LawsonBase):
-    def query(self):
-        raise NotImplementedError
+    query = None
 
     def upload(self):
         self.params.update({'_TKN': 'GL40.2', '_RTN': 'DATA', '_TDS': 'IGNORE', '_OUT': 'XML', '_EOT': 'TRUE'})
         self.xml = self.session.transaction(data=self.params)
         self._error_check()
-        return self.xml
+        return self
 
 
 class JournalLine(LawsonBase):
@@ -96,14 +100,14 @@ class JournalLine(LawsonBase):
             {'FILE': 'GLTRANS', 'INDEX': 'GLTSET3', 'OUT': 'XML', 'NEXT': 'FALSE', 'MAX': '10000', 'keyUsage': 'PARAM'})
         self.xml = self.session.data(data=self.params)
         self._error_check()
-        return self.xml
+        return self
 
     def upload(self):
         self.params.update(
             {'_TKN': 'GL40.1', '_RTN': 'DATA', '_TDS': 'IGNORE', '_OUT': 'XML', '_EOT': 'TRUE', '_INITDTL': 'TRUE'})
         self.xml = self.session.transaction(data=self.params)
         self._error_check()
-        return self.xml
+        return self
 
 
 class InterfaceLine(LawsonBase):

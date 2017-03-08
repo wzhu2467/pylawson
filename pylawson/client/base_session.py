@@ -1,6 +1,6 @@
 from io import IOBase
 import json
-from typing import Union
+from typing import Union, Optional
 
 
 class Profile:
@@ -56,39 +56,48 @@ class IosSession:
     def close(self):
         raise NotImplementedError
 
-    def _generic_call(self, url: str, productline_key: str, data: dict) -> str:
+    def _generic_call(self, url: str, data: dict, productline_key: Optional[str]) -> str:
         """Wraps self.post to send a specific action with product line."""
-        # noinspection PyUnresolvedReferences
-        call_data = {productline_key: self.profile.productline}
+        call_data = dict()
+        if productline_key:
+            # noinspection PyUnresolvedReferences
+            call_data[productline_key] = self.profile.productline
         call_data.update(data)
+        if not call_data:
+            return self.get(url=url)
         return self.post(url=url, data=call_data)
 
     def tokens(self, data: dict):
         """Lawson ListTokens Action."""
         url = '/lawson-ios/action/ListTokens'
         productline_key = 'productLine'
-        return self._generic_call(url=url, productline_key=productline_key, data=data)
+        return self._generic_call(url=url, data=data, productline_key=productline_key)
 
     def attachments(self, data: dict):
         """Lawson ListAttachments Action."""
         url = '/lawson-ios/action/ListAttachments'
         productline_key = 'dataArea'
-        return self._generic_call(url=url, productline_key=productline_key, data=data)
+        return self._generic_call(url=url, data=data, productline_key=productline_key)
 
     def data(self, data: dict):
         """Lawson Data call."""
         url = '/servlet/Router/Data/erp'
         productline_key = 'PROD'
-        return self._generic_call(url=url, productline_key=productline_key, data=data)
+        return self._generic_call(url=url, data=data, productline_key=productline_key)
 
     def drill(self, data: dict):
         """Lawson Drill call."""
         url = '/servlet/Router/Drill/erp'
         productline_key = 'PROD'
-        return self._generic_call(url=url, productline_key=productline_key, data=data)
+        return self._generic_call(url=url, data=data, productline_key=productline_key)
 
     def transaction(self, data: dict):
         """Lawson Transaction call."""
         url = '/servlet/Router/Transaction/erp'
         productline_key = '_PDL'
-        return self._generic_call(url=url, productline_key=productline_key, data=data)
+        return self._generic_call(url=url, data=data, productline_key=productline_key)
+
+    def what(self, data: dict):
+        """Lawson What call."""
+        url = '/servlet/What'
+        return self._generic_call(url=url, data=data)

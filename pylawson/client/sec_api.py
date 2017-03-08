@@ -6,7 +6,7 @@ from typing import Union
 from urllib.parse import urlencode, urljoin
 # noinspection PyPackageRequirements
 from bs4 import BeautifulSoup
-from pylawson import IosError, IosAuthenticationError
+from pylawson import IosError, IosAuthenticationError, IosConnectionError
 from pylawson.client import IosSession
 
 # noinspection PyPackageRequirements
@@ -66,7 +66,7 @@ class SecApiSession(IosSession):
         if factory.Error:
             msg = 'SEC-API error: {}'.format(factory.Error)
             logger.error(msg)
-            raise IosError(msg)
+            raise IosConnectionError(msg)
 
         # The balance of our methods are found on the Connection Interface.
         self.connection = None
