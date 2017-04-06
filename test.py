@@ -13,7 +13,7 @@ print('profile:', ios.profile)
 
 ios.close()
 
-ios = sec_api.SecApiSession(json_file='c:/users/sacarey/personal/google drive/dev/pylawson.json')
+ios = sec_api.SecApiSession()
 
 print('bool:', ios.__bool__())
 

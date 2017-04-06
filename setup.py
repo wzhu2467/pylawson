@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='pylawson',
-    version='0.2',
+    version='0.3',
     description='Infor Lawson IOS API Wrapper',
     long_description=open('README.rst').read(),
     keywords='infor lawson erp',
@@ -13,7 +13,7 @@ setup(
     packages=['pylawson', 'pylawson.client'],
     install_requires=['beautifulsoup4', 'requests'],
     extras_require={
-        'sec_api': ['clr']
+        'sec_api': ['pythonnet']
     },
     zip_safe=False
 )

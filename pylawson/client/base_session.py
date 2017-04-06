@@ -11,17 +11,10 @@ class Profile:
 
 class IosSession:
     """Base class for an Infor Lawson Connection session object."""
-    def __init__(self, json_file: Union[str, IOBase] = None, lawson_server: str = None, ident_server: str = None,
-                 username: str = None, password: str = None):
+    def __init__(self, json_file: Union[str, IOBase] = None, **kwargs):
         self._profile = Profile()
         self._xfer_url = None
-        self._params = {
-            'lawson_server': lawson_server,
-            'ident_server': ident_server,
-            'ident_host': None,
-            'username': username,
-            'password': password
-        }
+        self._params = kwargs
         if json_file:
             fp = json_file if isinstance(json_file, IOBase) else open(json_file)
             json_data = json.load(fp=fp)

@@ -15,9 +15,9 @@ logger = getLogger(__name__)
 
 class SamlSession(IosSession):
     def __init__(self, json_file: Union[str, IOBase] = None, lawson_server: str = None, ident_server: str = None,
-                 username: str = None, password: str = None):
+                 username: str = None, password: str = None, **kwargs):
         super().__init__(json_file=json_file, lawson_server=lawson_server, ident_server=ident_server,
-                         username=username, password=password)
+                         username=username, password=password, **kwargs)
         self._sso = None
         headers = {
             'Upgrade-Insecure-Requests': '1', 'Accept-Language': 'en-US,en',
@@ -25,7 +25,7 @@ class SamlSession(IosSession):
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) ' +
                           'Chrome/53.0.2785.143 Safari/537.36'
         }
-        ip_host = self._params['ident_host'] or urlparse(self._params['lawson_server']).netloc
+        ip_host = self._params.get('ident_host') or urlparse(self._params['lawson_server']).netloc
         ip_cookie = cookielib.Cookie(
             version=0, name='MSISIPSelectionPersistent',
             value=b64encode(self._params['ident_server'].encode('utf-8')).decode('utf-8'),
@@ -100,9 +100,13 @@ class SamlSession(IosSession):
         # 4 - Request the SSO Service at IdP - provides sign in form - status 200
         response = self.session.get(redirect, allow_redirects=False, headers={'Referer': id_response.url})
         logger.debug(msg='Auth #4 - request SSO service (sign in form)')
+        if response.status_code != 200:
+            msg = 'Unexpected response from Sign In Form request.'
+            logger.error(msg=msg)
+            raise IosConnectionError(msg)
         url, data = self._form(response)
-        if 'wa=wsignin' not in url or response.status_code != 200:
-            msg = 'Unexpected response from Sign In Form Submission.'
+        if 'wa=wsignin' not in url:
+            msg = 'Unexpected Sign In Form content.'
             logger.error(msg=msg)
             raise IosConnectionError(msg)
 

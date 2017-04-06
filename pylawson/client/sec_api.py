@@ -1,8 +1,6 @@
 """SecApiSession: IosSession using Infor Lawson Office Add-ins .NET library (Infor Security sec-api.dll)."""
-from io import IOBase
 from logging import getLogger
 import os
-from typing import Union
 from urllib.parse import urlencode, urljoin
 # noinspection PyPackageRequirements
 from bs4 import BeautifulSoup
@@ -10,7 +8,7 @@ from pylawson import IosError, IosAuthenticationError, IosConnectionError
 from pylawson.client import IosSession
 
 # noinspection PyPackageRequirements
-import clr
+import clr  # clr is from the pythonnet package
 try:
     _ = clr.AddReference(
         os.getenv('PROGRAMFILES(x86)', r'c:\Program Files (x86)') + r'\Lawson Software\Office Add-ins\sec-api.dll'
@@ -48,9 +46,8 @@ class SecApiSession(IosSession):
 
     The Infor sec-api library will pop up a login window; as such, this class does not accept username/password.
     """
-    def __init__(self, json_file: Union[str, IOBase] = None, lawson_server: str = None, ident_server: str = None):
-        super().__init__(json_file=json_file, lawson_server=lawson_server, ident_server=ident_server,
-                         username=None, password=None)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # The sec-api .NET library crashes if it doesn't detect a Single Apartment State environment.
         thread = Threading.Thread.CurrentThread
         if not thread.TrySetApartmentState(Threading.ApartmentState.STA):
@@ -74,7 +71,7 @@ class SecApiSession(IosSession):
         logger.debug('Basic SecApiSession instantiation completed.')
 
         # Run login, which populates self.connection, self._xfer_url, self.server, and self._profile
-        self.login(clientDisplayName='Python Infor Login')
+        self.login(clientDisplayName=self._params.get('client_display_name', 'Python Infor Login'))
 
     def __bool__(self) -> bool:
         """Status of connection."""
