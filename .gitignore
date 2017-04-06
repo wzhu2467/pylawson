@@ -5,3 +5,4 @@ pylawson/__pycache__/
 # Distribution / packaging
 *.egg-info/
 .idea/
+dist/
