@@ -101,3 +101,14 @@ class IosSession:
         """Lawson What call."""
         url = '/servlet/What'
         return self._generic_call(url=url, data=data)
+
+    def genfile(self, data: dict):
+        """Lawson Data call on GEN database."""
+        url = '/servlet/Router/Data/erp'
+        data['PROD'] = 'GEN'
+        return self._generic_call(url=url, data=data)
+
+    def formdef(self, token: str, out: str='XML'):
+        url = '/cgi-lawson/formdef.exe'
+        data = {'_TKN': token, '_OUT': out}
+        return self._generic_call(url=url, data=data, productline_key='_PDL')
