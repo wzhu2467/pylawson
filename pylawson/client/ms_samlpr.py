@@ -102,6 +102,9 @@ class SamlSession(IosSession):
         logger.debug(msg='Auth #4 - request SSO service (sign in form)')
         if response.status_code != 200:
             msg = 'Unexpected response from Sign In Form request.'
+            if response.status_code == 302:
+                # This is where you're logging in too frequently so you get redirected to the maintenance page.
+                msg += ' Redirected to ' + response.headers.get('Location')
             logger.error(msg=msg)
             raise IosConnectionError(msg)
         url, data = self._form(response)
